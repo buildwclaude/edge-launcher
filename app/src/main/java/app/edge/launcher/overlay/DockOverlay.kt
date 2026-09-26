@@ -106,7 +106,7 @@ class DockOverlay(private val service: EdgeAccessibilityService) {
         reveal.animateTo(false)
     }
 
-    fun close() = reveal.animateTo(false)
+    fun close() { reveal.animateTo(false) }
 
     fun hideNow() {
         homeHint = 0f

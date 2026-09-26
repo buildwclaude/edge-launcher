@@ -70,7 +70,7 @@ fun HomeContent(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(32.dp))
         HomeClock()
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-            val side = min(maxWidth, maxHeight) / 1.5f
+            val side = minOf(maxWidth, maxHeight) / 1.5f
             Infographic(data, resumes, Modifier.size(side))
         }
     }
