@@ -50,7 +50,7 @@ import kotlin.math.max
 import kotlin.math.roundToInt
 
 /** How one launcher item is drawn at the current scroll position. */
-private class Fold(
+class Fold(
     /** Distance of the item's bottom edge above the bottom of the list, in px. */
     val bottom: Float,
     val angle: Float,
