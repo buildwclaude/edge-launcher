@@ -25,7 +25,14 @@ data class EdgeSettings(
     val topEnabled: Boolean = true,
     val bottomEnabled: Boolean = true,
     /** Width of the left/right touch strips. */
-    val sideWidthDp: Int = 12,
+    val sideWidthDp: Int = 16,
+    /**
+     * Place the side strips automatically: the 200dp band Android lets us take
+     * from the Back gesture, or the whole edge on the home screen.
+     */
+    val sideAuto: Boolean = true,
+    /** Faint line on each side edge showing where to swipe. */
+    val edgeHints: Boolean = true,
     /** Vertical span of the side strips, as fractions of screen height. */
     val leftStart: Float = 0.04f,
     val leftEnd: Float = 0.66f,
@@ -72,6 +79,8 @@ object Keys {
     val hideInFullscreen = booleanPreferencesKey("hide_fullscreen")
     val hideWithKeyboard = booleanPreferencesKey("hide_keyboard")
     val showStrips = booleanPreferencesKey("show_strips")
+    val sideAuto = booleanPreferencesKey("side_auto")
+    val edgeHints = booleanPreferencesKey("edge_hints")
     val lomiriPanel = booleanPreferencesKey("lomiri_panel")
     val longLeftDrawer = booleanPreferencesKey("long_left_drawer")
     val pinned = stringPreferencesKey("pinned")
@@ -104,6 +113,8 @@ class SettingsRepository(context: Context, private val scope: CoroutineScope) {
             hideInFullscreen = p[Keys.hideInFullscreen] ?: d.hideInFullscreen,
             hideWithKeyboard = p[Keys.hideWithKeyboard] ?: d.hideWithKeyboard,
             showStrips = p[Keys.showStrips] ?: d.showStrips,
+            sideAuto = p[Keys.sideAuto] ?: d.sideAuto,
+            edgeHints = p[Keys.edgeHints] ?: d.edgeHints,
             lomiriPanel = p[Keys.lomiriPanel] ?: d.lomiriPanel,
             longLeftDrawer = p[Keys.longLeftDrawer] ?: d.longLeftDrawer,
             pinned = p[Keys.pinned]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
@@ -125,7 +136,7 @@ class SettingsRepository(context: Context, private val scope: CoroutineScope) {
             Keys.leftEnabled, Keys.rightEnabled, Keys.topEnabled, Keys.bottomEnabled,
             Keys.sideWidthDp, Keys.leftStart, Keys.leftEnd, Keys.rightStart, Keys.rightEnd,
             Keys.topHeightDp, Keys.bottomHeightDp, Keys.bottomOffsetDp, Keys.triggerDistanceDp,
-            Keys.dockIconDp, Keys.longSwipeFraction, Keys.hideInFullscreen, Keys.hideWithKeyboard, Keys.showStrips,
+            Keys.dockIconDp, Keys.longSwipeFraction, Keys.hideInFullscreen, Keys.hideWithKeyboard, Keys.showStrips, Keys.sideAuto, Keys.edgeHints,
         ).forEach { p.remove(it) }
     }
 

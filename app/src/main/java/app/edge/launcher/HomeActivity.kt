@@ -51,6 +51,17 @@ class HomeActivity : ComponentActivity() {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
         }
+        // Home windows aren't limited to 200dp of gesture exclusion: free both side edges.
+        window.decorView.addOnLayoutChangeListener { v, _, _, _, _, _, _, _, _ ->
+            val edge = (40 * resources.displayMetrics.density).toInt()
+            androidx.core.view.ViewCompat.setSystemGestureExclusionRects(
+                v,
+                listOf(
+                    android.graphics.Rect(0, 0, edge, v.height),
+                    android.graphics.Rect(v.width - edge, 0, v.width, v.height),
+                ),
+            )
+        }
         setContent {
             EdgeTheme {
                 HomeRoot(onDrawerState = { drawer = it })

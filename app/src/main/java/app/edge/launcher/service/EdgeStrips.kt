@@ -31,6 +31,24 @@ interface EdgeGestureListener {
 @SuppressLint("ViewConstructor")
 class EdgeStripView(context: Context, private val edge: Edge, private val listener: EdgeGestureListener) : View(context) {
     private val slop = ViewConfiguration.get(context).scaledTouchSlop
+    private val hintPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.argb(110, 255, 255, 255)
+    }
+
+    /** Draws a faint line on the outer edge so the swipe area can be found. */
+    var showHint = false
+        set(v) { if (field != v) { field = v; setWillNotDraw(!v); invalidate() } }
+
+    override fun onDraw(canvas: android.graphics.Canvas) {
+        super.onDraw(canvas)
+        if (!showHint) return
+        val d = resources.displayMetrics.density
+        val w = 3f * d
+        val len = minOf(56f * d, height * 0.5f)
+        val top = (height - len) / 2f
+        val x = if (edge == Edge.LEFT) 0f else width - w
+        canvas.drawRoundRect(x, top, x + w, top + len, w, w, hintPaint)
+    }
     private var downX = 0f
     private var downY = 0f
     private var dragging = false
@@ -120,6 +138,9 @@ class EdgeStrips(
         set(v) { if (field != v) { field = v; relayout() } }
     var locked = false
         set(v) { if (field != v) { field = v; relayout() } }
+    /** Edge's home screen is in front; it frees the whole edge from Back. */
+    var homeMode = false
+        set(v) { if (field != v) { field = v; relayout() } }
 
     /** 1px window whose only job is to observe system-bar visibility. */
     private val probe = View(context)
@@ -177,8 +198,23 @@ class EdgeStrips(
                 Edge.LEFT, Edge.RIGHT -> {
                     val start = if (edge == Edge.LEFT) s.leftStart else s.rightStart
                     val end = if (edge == Edge.LEFT) s.leftEnd else s.rightEnd
-                    val top = (minOf(start, end) * h).toInt()
-                    val height = ((maxOf(start, end) - minOf(start, end)) * h).toInt().coerceAtLeast(px(48))
+                    val top: Int
+                    val height: Int
+                    when {
+                        s.sideAuto && homeMode -> {
+                            top = px(40)
+                            height = h - px(40) - px(72)
+                        }
+                        s.sideAuto -> {
+                            // Android excludes at most 200dp per edge from Back.
+                            height = px(EXCLUSION_DP)
+                            top = (h * 0.42f).toInt() - height / 2
+                        }
+                        else -> {
+                            top = (minOf(start, end) * h).toInt()
+                            height = ((maxOf(start, end) - minOf(start, end)) * h).toInt().coerceAtLeast(px(48))
+                        }
+                    }
                     overlayParams(px(s.sideWidthDp), height, focusable = false).apply {
                         gravity = Gravity.TOP or if (edge == Edge.LEFT) Gravity.LEFT else Gravity.RIGHT
                         y = top
@@ -195,6 +231,7 @@ class EdgeStrips(
             val existing = strips[edge]
             val view = existing ?: EdgeStripView(context, edge, listener)
             view.setBackgroundColor(if (s.showStrips) 0x66E95420 else 0)
+            view.showHint = s.edgeHints && (edge == Edge.LEFT || edge == Edge.RIGHT)
             try {
                 if (existing == null) {
                     wm.addView(view, p)
@@ -206,6 +243,10 @@ class EdgeStrips(
                 android.util.Log.w("EdgeStrips", "strip $edge failed", e)
             }
         }
+    }
+
+    companion object {
+        const val EXCLUSION_DP = 200
     }
 
     fun removeAll() {

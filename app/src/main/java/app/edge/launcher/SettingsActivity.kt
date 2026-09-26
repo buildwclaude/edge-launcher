@@ -113,13 +113,19 @@ private fun SettingsScreen() {
 
             SectionTitle("Strip size & position")
             SettingsCard {
+                SwitchRow(
+                    "Automatic side placement",
+                    s.sideAuto,
+                    "Takes the 200 dp band Android lets apps claim from Back, and the whole edge on the home screen",
+                ) { repo.set(Keys.sideAuto, it) }
+                SwitchRow("Edge hints", s.edgeHints, "A faint line marks where to swipe") { repo.set(Keys.edgeHints, it) }
                 SliderRow("Side strip width", s.sideWidthDp.toFloat(), 4f..40f, { "${it.roundToInt()} dp" }) {
                     repo.set(Keys.sideWidthDp, it.roundToInt())
                 }
-                RangeRow("Left strip covers", s.leftStart..s.leftEnd, 0f..1f, { "${pct(it.start)} – ${pct(it.endInclusive)}" }) {
+                if (!s.sideAuto) RangeRow("Left strip covers", s.leftStart..s.leftEnd, 0f..1f, { "${pct(it.start)} – ${pct(it.endInclusive)}" }) {
                     repo.edit { p -> p[Keys.leftStart] = it.start; p[Keys.leftEnd] = it.endInclusive }
                 }
-                RangeRow("Right strip covers", s.rightStart..s.rightEnd, 0f..1f, { "${pct(it.start)} – ${pct(it.endInclusive)}" }) {
+                if (!s.sideAuto) RangeRow("Right strip covers", s.rightStart..s.rightEnd, 0f..1f, { "${pct(it.start)} – ${pct(it.endInclusive)}" }) {
                     repo.edit { p -> p[Keys.rightStart] = it.start; p[Keys.rightEnd] = it.endInclusive }
                 }
                 SliderRow("Top strip height", s.topHeightDp.toFloat(), 6f..48f, { "${it.roundToInt()} dp" }) {
@@ -176,9 +182,8 @@ private fun SettingsScreen() {
             SectionTitle("Tips")
             SettingsCard {
                 Text(
-                    "• Use gesture navigation (Settings › System › Navigation).\n" +
-                        "• Lower the Back gesture sensitivity there, so it doesn't fight the side strips.\n" +
-                        "• System Back still works on the lower third of each side; Edge covers the upper part.\n" +
+                    "• Swipe in from the middle of either side edge (where the faint line is). Back still works above and below it.\n" +
+                        "• On the home screen the whole side edge belongs to Edge.\n" +
                         "• Double-tap the home screen to lock. Long-press it for wallpaper and settings.\n" +
                         "• Long left swipe goes home. Long-press the orange dock button for home too.",
                     color = Lomiri.TextDim,

@@ -199,24 +199,19 @@ private fun Onboarding(onFinish: () -> Unit) {
             Column(
                 Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF232323)).padding(16.dp),
             ) {
-                Text("Navigation", color = Lomiri.Text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                Text("How to use", color = Lomiri.Text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
                 Spacer(Modifier.height(6.dp))
-                val navPath = if (Build.MANUFACTURER.equals("Nothing", true)) {
-                    "Settings › System › Gestures › Navigation mode"
-                } else {
-                    "Settings › System › Navigation"
-                }
                 Text(
-                    "Switch the phone to gesture navigation ($navPath), then lower the Back gesture " +
-                        "sensitivity for both edges. Edge's side strips cover the upper two-thirds of the " +
-                        "screen; system Back still works below them.",
+                    "Nothing to change in your phone's settings. Swipe in from the middle of the left or right " +
+                        "edge, where the faint line is; Edge claims that part of the edge from Android's Back " +
+                        "gesture, and Back keeps working above and below it. On the home screen the whole edge is Edge's.",
                     color = Lomiri.TextDim,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    "Left edge: dock  •  Right edge: switch apps (drag further for all)\n" +
+                    "Left edge: launcher  •  Right edge: switch apps (drag further for all)\n" +
                         "Bottom edge: app drawer  •  Top edge: indicators (pull under the one you want)",
                     color = Lomiri.Text,
                     fontSize = 13.sp,

@@ -87,7 +87,10 @@ class EdgeAccessibilityService : AccessibilityService(), EdgeGestureListener {
             edge.settings.settings.filterNotNull().collect { strips.apply(it) }
         }
         scope.launch {
-            edge.recents.foreground.collect { fg -> scheduleCapture(fg) }
+            edge.recents.foreground.collect { fg ->
+                strips.homeMode = fg == RecentsRepository.HOME
+                scheduleCapture(fg)
+            }
         }
         edge.recents.seedFromUsageStats()
 
