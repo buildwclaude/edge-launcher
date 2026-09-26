@@ -6,4 +6,5 @@
     android:canRetrieveWindowContent="true"
     android:notificationTimeout="0"
     android:description="@string/accessibility_description"
-    android:summary="@string/accessibility_summary" />
+    android:summary="@string/accessibility_summary"
+    android:settingsActivity="app.edge.launcher.SettingsActivity" />

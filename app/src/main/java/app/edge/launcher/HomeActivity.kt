@@ -24,6 +24,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.edge.launcher.ui.ActionSheet
@@ -49,6 +53,7 @@ class HomeActivity : ComponentActivity() {
                 HomeRoot(onDrawerState = { drawer = it })
             }
         }
+        if (savedInstanceState == null) showOnboardingIfNeeded()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -124,6 +129,9 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
             title = "Edge",
             icon = null,
             actions = listOf(
+                SheetAction("Edge settings") {
+                    context.startActivity(Intent(context, SettingsActivity::class.java))
+                },
                 SheetAction("Change wallpaper") {
                     runCatching {
                         context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SET_WALLPAPER), "Wallpaper"))

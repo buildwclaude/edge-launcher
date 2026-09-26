@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Edge</string>
+    <string name="settings_label">Edge Settings</string>
     <string name="accessibility_label">Edge gestures</string>
     <string name="accessibility_summary">Edge swipes: dock, app switcher, drawer and panels</string>
     <string name="accessibility_description">Edge uses this service to draw thin invisible strips along the screen edges so you can swipe from any app: left for the dock, right to switch apps, bottom for the app drawer and top for notifications and quick settings. It also locks the screen on double-tap and notes which app is in front to build the recent-apps list. Edge does not read screen content, and nothing leaves your phone.</string>

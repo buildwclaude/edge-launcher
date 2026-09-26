@@ -2,7 +2,6 @@ package app.edge.launcher.overlay
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -58,7 +57,6 @@ import app.edge.launcher.ui.AppIcon
 import app.edge.launcher.ui.EdgeTheme
 import app.edge.launcher.ui.Lomiri
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -184,19 +182,13 @@ class SwitcherOverlay(private val service: EdgeAccessibilityService) {
         scope.launch { scroll.snapTo(v) }
     }
 
+    /** Throws the hand by [velocity] px/s and settles on the nearest card. */
     fun fling(velocity: Float) {
+        val target = ((scroll.value + velocity * 0.3f) / stepPx).roundToInt() * stepPx
+        rawScroll = target.coerceIn(0f, maxScroll)
+        val v = rawScroll
         scope.launch {
-            val decay = exponentialDecay<Float>(frictionMultiplier = 1.6f)
-            val target = (scroll.value + velocity * 0.35f).coerceIn(0f, maxScroll)
-            val snapped = (target / stepPx).roundToInt() * stepPx
-            if (abs(velocity) > 300f) {
-                scroll.updateBounds(-stepPx * 0.3f, maxScroll + stepPx * 0.3f)
-                scroll.animateDecay(velocity, decay)
-                scroll.updateBounds(null, null)
-            }
-            val end = (scroll.value / stepPx).roundToInt() * stepPx
-            rawScroll = end.coerceIn(0f, maxScroll).let { if (abs(velocity) > 300f) it else snapped.coerceIn(0f, maxScroll) }
-            scroll.animateTo(rawScroll, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessLow))
+            scroll.animateTo(v, spring(dampingRatio = 0.85f, stiffness = Spring.StiffnessLow), initialVelocity = velocity)
         }
     }
 
