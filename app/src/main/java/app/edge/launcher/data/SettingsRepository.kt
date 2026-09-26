@@ -42,6 +42,8 @@ data class EdgeSettings(
     val longSwipeFraction: Float = 0.4f,
     val hideInFullscreen: Boolean = true,
     val hideWithKeyboard: Boolean = true,
+    /** Tints the touch strips so they can be positioned. */
+    val showStrips: Boolean = false,
     val pinned: List<String> = emptyList(),
     val pinnedInitialized: Boolean = false,
     val onboardingDone: Boolean = false,
@@ -65,6 +67,7 @@ object Keys {
     val longSwipeFraction = floatPreferencesKey("long_swipe_fraction")
     val hideInFullscreen = booleanPreferencesKey("hide_fullscreen")
     val hideWithKeyboard = booleanPreferencesKey("hide_keyboard")
+    val showStrips = booleanPreferencesKey("show_strips")
     val pinned = stringPreferencesKey("pinned")
     val pinnedInitialized = booleanPreferencesKey("pinned_initialized")
     val onboardingDone = booleanPreferencesKey("onboarding_done")
@@ -94,6 +97,7 @@ class SettingsRepository(context: Context, private val scope: CoroutineScope) {
             longSwipeFraction = p[Keys.longSwipeFraction] ?: d.longSwipeFraction,
             hideInFullscreen = p[Keys.hideInFullscreen] ?: d.hideInFullscreen,
             hideWithKeyboard = p[Keys.hideWithKeyboard] ?: d.hideWithKeyboard,
+            showStrips = p[Keys.showStrips] ?: d.showStrips,
             pinned = p[Keys.pinned]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
             pinnedInitialized = p[Keys.pinnedInitialized] ?: false,
             onboardingDone = p[Keys.onboardingDone] ?: false,
@@ -113,7 +117,7 @@ class SettingsRepository(context: Context, private val scope: CoroutineScope) {
             Keys.leftEnabled, Keys.rightEnabled, Keys.topEnabled, Keys.bottomEnabled,
             Keys.sideWidthDp, Keys.leftStart, Keys.leftEnd, Keys.rightStart, Keys.rightEnd,
             Keys.topHeightDp, Keys.bottomHeightDp, Keys.bottomOffsetDp, Keys.triggerDistanceDp,
-            Keys.dockIconDp, Keys.longSwipeFraction, Keys.hideInFullscreen, Keys.hideWithKeyboard,
+            Keys.dockIconDp, Keys.longSwipeFraction, Keys.hideInFullscreen, Keys.hideWithKeyboard, Keys.showStrips,
         ).forEach { p.remove(it) }
     }
 
