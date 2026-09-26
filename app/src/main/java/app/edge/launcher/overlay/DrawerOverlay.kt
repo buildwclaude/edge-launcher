@@ -43,9 +43,9 @@ class DrawerOverlay(private val service: EdgeAccessibilityService) {
         last = distance
     }
 
-    fun release(velocity: Float) = reveal.settle(velocity)
-    fun cancel() = reveal.animateTo(false)
-    fun close() = reveal.animateTo(false)
+    fun release(velocity: Float) { reveal.settle(velocity) }
+    fun cancel() { reveal.animateTo(false) }
+    fun close() { reveal.animateTo(false) }
 
     fun open() {
         reveal.extentPx = service.screenHeight().toFloat()
