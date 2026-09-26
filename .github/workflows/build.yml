@@ -27,23 +27,23 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build debug APK
-        run: ./gradlew assembleDebug --stacktrace
+      - name: Build release APK
+        run: ./gradlew assembleRelease --stacktrace
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/debug/app-debug.apk edge-debug.apk
+        run: cp app/build/outputs/apk/release/app-release.apk edge.apk
 
       - uses: actions/upload-artifact@v4
         with:
-          name: edge-debug-apk
-          path: edge-debug.apk
+          name: edge-apk
+          path: edge.apk
 
       - name: Update "latest" pre-release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest edge-debug.apk \
+          gh release create latest edge.apk \
             --prerelease \
-            --title "Edge (latest debug build)" \
-            --notes "Built from ${GITHUB_SHA::7}. Download edge-debug.apk on your phone and install it."
+            --title "Edge (latest build)" \
+            --notes "Built from ${GITHUB_SHA::7}. Download edge.apk on your phone and install it over the previous version."

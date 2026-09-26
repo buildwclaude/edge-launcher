@@ -37,13 +37,17 @@ data class EdgeSettings(
     val bottomOffsetDp: Int = 0,
     /** How far a finger must travel before a swipe counts. */
     val triggerDistanceDp: Int = 28,
-    val dockIconDp: Int = 52,
+    val dockIconDp: Int = 54,
     /** Right-edge swipes past this fraction of screen width open the spread. */
     val longSwipeFraction: Float = 0.4f,
     val hideInFullscreen: Boolean = true,
     val hideWithKeyboard: Boolean = true,
     /** Tints the touch strips so they can be positioned. */
     val showStrips: Boolean = false,
+    /** Top edge opens Edge's Lomiri-style indicator panel instead of the system shade. */
+    val lomiriPanel: Boolean = true,
+    /** A long left swipe opens the app drawer (Lomiri) instead of going home. */
+    val longLeftDrawer: Boolean = true,
     val pinned: List<String> = emptyList(),
     val pinnedInitialized: Boolean = false,
     val onboardingDone: Boolean = false,
@@ -68,6 +72,8 @@ object Keys {
     val hideInFullscreen = booleanPreferencesKey("hide_fullscreen")
     val hideWithKeyboard = booleanPreferencesKey("hide_keyboard")
     val showStrips = booleanPreferencesKey("show_strips")
+    val lomiriPanel = booleanPreferencesKey("lomiri_panel")
+    val longLeftDrawer = booleanPreferencesKey("long_left_drawer")
     val pinned = stringPreferencesKey("pinned")
     val pinnedInitialized = booleanPreferencesKey("pinned_initialized")
     val onboardingDone = booleanPreferencesKey("onboarding_done")
@@ -98,6 +104,8 @@ class SettingsRepository(context: Context, private val scope: CoroutineScope) {
             hideInFullscreen = p[Keys.hideInFullscreen] ?: d.hideInFullscreen,
             hideWithKeyboard = p[Keys.hideWithKeyboard] ?: d.hideWithKeyboard,
             showStrips = p[Keys.showStrips] ?: d.showStrips,
+            lomiriPanel = p[Keys.lomiriPanel] ?: d.lomiriPanel,
+            longLeftDrawer = p[Keys.longLeftDrawer] ?: d.longLeftDrawer,
             pinned = p[Keys.pinned]?.split('\n')?.filter { it.isNotBlank() } ?: emptyList(),
             pinnedInitialized = p[Keys.pinnedInitialized] ?: false,
             onboardingDone = p[Keys.onboardingDone] ?: false,

@@ -123,6 +123,33 @@ private fun Onboarding(onFinish: () -> Unit) {
                 onAction = { Permissions.open(context, Permissions.overlaySettings(context)) },
             ),
             Step(
+                title = "Notifications in the top panel",
+                body = "Optional. Lets the Edge indicator panel list your notifications, open them and clear them. " +
+                    "Like accessibility, this may need \u201cAllow restricted settings\u201d first.",
+                done = app.edge.launcher.service.EdgeNotificationListener.isEnabled(context),
+                optional = true,
+                action = "Allow access",
+                onAction = {
+                    Permissions.open(context, android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                },
+            ),
+            Step(
+                title = "Brightness & rotation",
+                body = "Optional. \u201cModify system settings\u201d lets the panel change brightness and rotation lock.",
+                done = android.provider.Settings.System.canWrite(context),
+                optional = true,
+                action = "Allow",
+                onAction = {
+                    Permissions.open(
+                        context,
+                        android.content.Intent(
+                            android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS,
+                            android.net.Uri.parse("package:${context.packageName}"),
+                        ),
+                    )
+                },
+            ),
+            Step(
                 title = "Battery",
                 body = "Set Edge to “Unrestricted” so the system doesn't stop the gesture service to save power. " +
                     "If it keeps dying, also lock Edge in the recent-apps screen of your old launcher.",
@@ -190,7 +217,7 @@ private fun Onboarding(onFinish: () -> Unit) {
                 Spacer(Modifier.height(10.dp))
                 Text(
                     "Left edge: dock  •  Right edge: switch apps (drag further for all)\n" +
-                        "Bottom edge: app drawer  •  Top edge: notifications (left) / quick settings (right)",
+                        "Bottom edge: app drawer  •  Top edge: indicators (pull under the one you want)",
                     color = Lomiri.Text,
                     fontSize = 13.sp,
                     lineHeight = 19.sp,

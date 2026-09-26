@@ -33,7 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.edge.launcher.ui.ActionSheet
 import app.edge.launcher.ui.AppDrawer
 import app.edge.launcher.ui.EdgeTheme
-import app.edge.launcher.ui.HomeClock
+import app.edge.launcher.ui.HomeContent
 import app.edge.launcher.ui.Lomiri
 import app.edge.launcher.ui.RevealState
 import app.edge.launcher.ui.SheetAction
@@ -44,6 +44,9 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.attributes = window.attributes.apply {
+            preferredDisplayModeId = app.edge.launcher.service.highestRefreshModeId(this@HomeActivity)
+        }
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
@@ -72,7 +75,7 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
     val apps by edge.apps.apps.collectAsStateWithLifecycle()
     val settings by edge.settings.settings.collectAsStateWithLifecycle()
     var homeMenu by remember { mutableStateOf(false) }
-    val drawerVisible by remember { derivedStateOf { drawer.progress.value > 0f || drawer.isShown } }
+    val drawerVisible by remember { derivedStateOf { drawer.value > 0f || drawer.isShown } }
 
     BackHandler(enabled = drawer.isShown) { drawer.animateTo(false) }
 
@@ -103,13 +106,13 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
                         onDragCancel = { drawer.settle(0f) },
                     )
                 }
-                .graphicsLayer { alpha = 1f - drawer.progress.value },
-            contentAlignment = Alignment.Center,
+                .graphicsLayer { alpha = 1f - drawer.value * 0.7f },
         ) {
-            HomeClock()
+            HomeContent()
         }
 
-        if (drawerVisible) {
+        // Always composed so the first swipe up doesn't pay for building the grid.
+        Box(Modifier.fillMaxSize().graphicsLayer { alpha = if (drawerVisible) 1f else 0f }) {
             AppDrawer(
                 apps = apps.orEmpty(),
                 pinned = settings?.pinned.orEmpty(),
@@ -120,8 +123,8 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
                     drawer.snapClosed()
                 },
                 modifier = Modifier
-                    .graphicsLayer { translationY = (1f - drawer.progress.value) * height }
-                    .background(Lomiri.Panel),
+                    .graphicsLayer { translationY = (1f - drawer.value) * height }
+                    .background(Lomiri.DrawerBg),
             )
         }
 

@@ -1,5 +1,6 @@
 package app.edge.launcher.data
 
+import android.app.ActivityOptions
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -7,6 +8,11 @@ import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Shader
+import android.os.Build
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -129,9 +135,13 @@ class AppRepository(
         } catch (e: Exception) {
             context.packageManager.defaultActivityIcon
         }
-        val bitmap = drawableToSquareBitmap(drawable, iconSizePx)
-        val avg = Bitmap.createScaledBitmap(bitmap, 1, 1, true).getPixel(0, 0)
-        return bitmap.asImageBitmap() to Color(avg).copy(alpha = 1f)
+        val raw = drawableToSquareBitmap(drawable, iconSizePx)
+        val avg = Bitmap.createScaledBitmap(raw, 1, 1, true).getPixel(0, 0)
+        val shaped = squircle(raw)
+        raw.recycle()
+        // Hardware bitmaps live on the GPU: no per-frame uploads while animating.
+        val hw = if (Build.VERSION.SDK_INT >= 26) shaped.copy(Bitmap.Config.HARDWARE, false) ?: shaped else shaped
+        return hw.asImageBitmap() to Color(avg).copy(alpha = 1f)
     }
 
     // --- Lookups ------------------------------------------------------------
@@ -149,9 +159,11 @@ class AppRepository(
 
     // --- Actions ------------------------------------------------------------
 
-    fun launch(app: AppInfo, sourceBounds: Rect? = null) {
+    /** [animate] false skips the system's open animation (the switcher draws its own). */
+    fun launch(app: AppInfo, sourceBounds: Rect? = null, animate: Boolean = true) {
         try {
-            launcherApps.startMainActivity(app.component, app.user, sourceBounds, null)
+            val opts = if (animate) null else ActivityOptions.makeCustomAnimation(context, 0, 0).toBundle()
+            launcherApps.startMainActivity(app.component, app.user, sourceBounds, opts)
         } catch (e: Exception) {
             Log.w(TAG, "launch failed", e)
             Toast.makeText(context, "Couldn't open ${app.label}", Toast.LENGTH_SHORT).show()
@@ -204,6 +216,42 @@ class AppRepository(
          * Draws an icon into a full square. Adaptive icons are drawn without the
          * system mask so the UI can clip them to Lomiri's rounded squares.
          */
+        /** Lomiri-style superellipse, baked into the icon with anti-aliased edges. */
+        fun squircle(src: Bitmap): Bitmap {
+            val size = src.width.toFloat()
+            val out = Bitmap.createBitmap(src.width, src.height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(out)
+            val path = squirclePath(size)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+                shader = BitmapShader(src, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+            }
+            canvas.drawPath(path, paint)
+            // Hairline rim, like Suru icon shapes.
+            val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = size * 0.015f
+                color = android.graphics.Color.argb(40, 0, 0, 0)
+            }
+            canvas.drawPath(path, rim)
+            return out
+        }
+
+        fun squirclePath(size: Float, n: Double = 4.4): Path {
+            val r = size / 2f
+            val path = Path()
+            val steps = 120
+            for (i in 0..steps) {
+                val t = 2 * Math.PI * i / steps
+                val c = Math.cos(t)
+                val sn = Math.sin(t)
+                val x = r + r * Math.signum(c) * Math.pow(Math.abs(c), 2.0 / n)
+                val y = r + r * Math.signum(sn) * Math.pow(Math.abs(sn), 2.0 / n)
+                if (i == 0) path.moveTo(x.toFloat(), y.toFloat()) else path.lineTo(x.toFloat(), y.toFloat())
+            }
+            path.close()
+            return path
+        }
+
         fun drawableToSquareBitmap(d: Drawable, size: Int): Bitmap {
             val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(bmp)

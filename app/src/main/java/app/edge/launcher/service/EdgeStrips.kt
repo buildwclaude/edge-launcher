@@ -17,6 +17,8 @@ import java.util.EnumMap
 enum class Edge { LEFT, RIGHT, TOP, BOTTOM }
 
 interface EdgeGestureListener {
+    /** Finger touched a strip; nothing is known about the gesture yet. */
+    fun onEdgeDown(edge: Edge)
     fun onEdgeStart(edge: Edge, rawX: Float, rawY: Float)
     /** [distance] is how far the finger has moved away from the edge, in px. */
     fun onEdgeDrag(edge: Edge, distance: Float, rawX: Float, rawY: Float)
@@ -50,6 +52,7 @@ class EdgeStripView(context: Context, private val edge: Edge, private val listen
                 dragging = false
                 tracker?.recycle()
                 tracker = VelocityTracker.obtain().also { it.addMovement(e) }
+                listener.onEdgeDown(edge)
             }
             MotionEvent.ACTION_MOVE -> {
                 tracker?.addMovement(e)

@@ -39,10 +39,11 @@ val IconShape = RoundedCornerShape(percent = 24)
 
 @Composable
 fun AppIcon(icon: ImageBitmap, size: Dp, modifier: Modifier = Modifier, contentDescription: String? = null) {
+    // The squircle is baked into the bitmap, so no per-frame clipping.
     Image(
         bitmap = icon,
         contentDescription = contentDescription,
-        modifier = modifier.size(size).clip(IconShape),
+        modifier = modifier.size(size),
     )
 }
 
@@ -75,23 +76,20 @@ fun ActionSheet(
             ) {
                 Column(
                     Modifier
-                        .navigationBarsPadding()
-                        .padding(12.dp)
-                        .widthIn(max = 480.dp)
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Lomiri.Card)
+                        .background(Lomiri.LauncherBg)
                         .clickable(remember { MutableInteractionSource() }, indication = null) {}
-                        .padding(vertical = 8.dp),
+                        .navigationBarsPadding(),
                 ) {
-                    Row(Modifier.padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    HorizontalDivider(color = Lomiri.Divider)
+                    Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                         if (icon != null) {
                             AppIcon(icon, 36.dp)
                             Spacer(Modifier.width(14.dp))
                         }
-                        Text(title, color = Lomiri.Text, fontSize = 18.sp, fontWeight = FontWeight.Medium)
+                        Text(title, color = Lomiri.Text, fontSize = 18.sp, fontWeight = FontWeight.Light)
                     }
-                    HorizontalDivider(color = Lomiri.PanelLight)
+                    HorizontalDivider(color = Lomiri.Divider)
                     for (a in actions) {
                         Text(
                             a.label,
@@ -100,8 +98,9 @@ fun ActionSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { onDismiss(); a.onClick() }
-                                .padding(horizontal = 20.dp, vertical = 14.dp),
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
                         )
+                        HorizontalDivider(color = Lomiri.Divider)
                     }
                 }
             }

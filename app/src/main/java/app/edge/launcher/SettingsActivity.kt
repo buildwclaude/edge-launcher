@@ -103,7 +103,7 @@ private fun SettingsScreen() {
             SettingsCard {
                 SwitchRow("Left edge: dock", s.leftEnabled) { repo.set(Keys.leftEnabled, it) }
                 SwitchRow("Right edge: app switcher", s.rightEnabled) { repo.set(Keys.rightEnabled, it) }
-                SwitchRow("Top edge: notifications & quick settings", s.topEnabled) { repo.set(Keys.topEnabled, it) }
+                SwitchRow("Top edge: indicators", s.topEnabled) { repo.set(Keys.topEnabled, it) }
                 SwitchRow("Bottom edge: app drawer", s.bottomEnabled) { repo.set(Keys.bottomEnabled, it) }
                 HorizontalDivider(color = Lomiri.PanelLight)
                 SwitchRow("Show strips", s.showStrips, "Tints the touch strips orange while you adjust them") {
@@ -143,7 +143,21 @@ private fun SettingsScreen() {
                 }
             }
 
-            SectionTitle("Dock")
+            SectionTitle("Lomiri")
+            SettingsCard {
+                SwitchRow(
+                    "Edge indicator panel",
+                    s.lomiriPanel,
+                    if (s.lomiriPanel) "Top edge opens the Lomiri-style panel" else "Top edge opens the system shade (left: notifications, right: quick settings)",
+                ) { repo.set(Keys.lomiriPanel, it) }
+                SwitchRow(
+                    "Long left swipe opens the app drawer",
+                    s.longLeftDrawer,
+                    if (s.longLeftDrawer) "As in Lomiri. Long-press the orange button to go home" else "A long left swipe goes home instead",
+                ) { repo.set(Keys.longLeftDrawer, it) }
+            }
+
+            SectionTitle("Launcher")
             SettingsCard {
                 SliderRow("Icon size", s.dockIconDp.toFloat(), 36f..72f, { "${it.roundToInt()} dp" }) {
                     repo.set(Keys.dockIconDp, it.roundToInt())

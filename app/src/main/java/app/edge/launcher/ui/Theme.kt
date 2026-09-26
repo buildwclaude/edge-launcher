@@ -11,14 +11,27 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import app.edge.launcher.R
 
+/** Lomiri / Suru dark palette. */
 object Lomiri {
     val Orange = Color(0xFFE95420)
+    val Aubergine = Color(0xFF772953)
+    val Jet = Color(0xFF111111)
+    val Inkstone = Color(0xFF3B3B3B)
+    val Slate = Color(0xFF666666)
+    val Ash = Color(0xFF888888)
+    val Silk = Color(0xFFCDCDCD)
+
+    /** Launcher panel and indicator menus: 95% jet. */
+    val LauncherBg = Color(0xF2111111)
+    /** App drawer: 75% black. */
+    val DrawerBg = Color(0xBF000000)
     val Scrim = Color(0x99000000)
-    val Panel = Color(0xE61A1A1A)
-    val PanelLight = Color(0x33FFFFFF)
-    val Card = Color(0xFF2C2C2C)
-    val Text = Color(0xFFF5F5F5)
-    val TextDim = Color(0xB3F5F5F5)
+    val Panel = LauncherBg
+    val PanelLight = Color(0x1FFFFFFF)
+    val Divider = Color(0x1FFFFFFF)
+    val Card = Color(0xFF1E1E1E)
+    val Text = Color(0xFFFFFFFF)
+    val TextDim = Color(0xFFAEAEAE)
 }
 
 val Ubuntu = FontFamily(
@@ -47,11 +60,11 @@ private val EdgeColors = darkColorScheme(
     primary = Lomiri.Orange,
     onPrimary = Color.White,
     secondary = Lomiri.Orange,
-    background = Color(0xFF111111),
+    background = Lomiri.Jet,
     onBackground = Lomiri.Text,
-    surface = Color(0xFF1E1E1E),
+    surface = Lomiri.Jet,
     onSurface = Lomiri.Text,
-    surfaceVariant = Color(0xFF2C2C2C),
+    surfaceVariant = Lomiri.Inkstone,
     onSurfaceVariant = Lomiri.TextDim,
 )
 
