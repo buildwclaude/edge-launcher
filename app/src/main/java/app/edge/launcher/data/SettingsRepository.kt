@@ -37,7 +37,7 @@ data class EdgeSettings(
     val bottomOffsetDp: Int = 0,
     /** How far a finger must travel before a swipe counts. */
     val triggerDistanceDp: Int = 28,
-    val dockIconDp: Int = 54,
+    val dockIconDp: Int = 48,
     /** Right-edge swipes past this fraction of screen width open the spread. */
     val longSwipeFraction: Float = 0.4f,
     val hideInFullscreen: Boolean = true,

@@ -2,6 +2,20 @@ package app.edge.launcher.overlay
 
 import android.accessibilityservice.AccessibilityService
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import kotlin.math.roundToInt
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -131,6 +145,14 @@ class DockOverlay(private val service: EdgeAccessibilityService) {
         service.edge.apps.launch(app)
         close()
     }
+
+    /** Drag-to-reorder: dropping at [index] pins the app there. */
+    fun drop(app: AppInfo, index: Int, pinned: List<String>) {
+        val list = pinned.toMutableList()
+        list.remove(app.key)
+        list.add(index.coerceIn(0, list.size), app.key)
+        service.edge.settings.setPinned(list)
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -142,41 +164,51 @@ private fun LauncherContent(dock: DockOverlay) {
     val mru by edge.recents.mru.collectAsState()
     val foreground by edge.recents.foreground.collectAsState()
     val s = settings ?: EdgeSettings()
+    // Lomiri: icons are 75% of the panel width (8gu panel, 6gu icons by default).
     val iconSize = s.dockIconDp.dp
     val panelWidth = iconSize / 0.75f
-    var menuFor by remember { mutableStateOf<AppInfo?>(null) }
+    val listState = remember { LauncherListState() }
+    var listTop by remember { mutableFloatStateOf(0f) }
 
     val pinnedApps = remember(s.pinned, apps) { s.pinned.mapNotNull { edge.apps.byKey(it) } }
     val runningApps = remember(mru, apps, pinnedApps) {
         val pinnedPkgs = pinnedApps.map { it.packageName }.toSet()
         mru.filter { it !in pinnedPkgs }.mapNotNull { edge.apps.forPackage(it) }
     }
-    val items = pinnedApps + runningApps
+    val items = remember(pinnedApps, runningApps) { pinnedApps + runningApps }
+    val running = remember(mru) { mru.toSet() }
     val reveal = dock.reveal
 
-    Box(
-        Modifier
-            .fillMaxSize()
-            .pointerInput(Unit) {
-                val tracker = VelocityTracker()
-                detectHorizontalDragGestures(
-                    onDragStart = { tracker.resetTracking(); reveal.beginDrag() },
-                    onHorizontalDrag = { change, dx ->
-                        tracker.addPosition(change.uptimeMillis, change.position)
-                        reveal.dragBy(dx)
-                    },
-                    onDragEnd = { reveal.settle(tracker.calculateVelocity().x) },
-                    onDragCancel = { reveal.settle(0f) },
-                )
-            },
-    ) {
-        // Light dim of the app behind; darker as a long swipe nears "home".
+    // Start at the bottom, closed quicklist, each time the launcher appears.
+    LaunchedEffect(reveal.isShown) {
+        if (!reveal.isShown) {
+            listState.quickList = null
+            listState.dragging = -1
+            listState.stop()
+            listState.scroll.floatValue = 0f
+        }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        // Outside the panel: tap to hide, or push the launcher back to the edge.
         Box(
             Modifier
                 .fillMaxSize()
-                .graphicsLayer { alpha = (reveal.value * 0.25f + dock.homeHint * 0.5f).coerceIn(0f, 1f) }
+                .graphicsLayer { alpha = dock.homeHint * 0.5f }
                 .background(Color.Black)
-                .pointerInput(Unit) { detectTapGestures { dock.close() } },
+                .pointerInput(Unit) { detectTapGestures { if (listState.quickList != null) listState.quickList = null else dock.close() } }
+                .pointerInput(Unit) {
+                    val tracker = VelocityTracker()
+                    detectHorizontalDragGestures(
+                        onDragStart = { tracker.resetTracking(); reveal.beginDrag() },
+                        onHorizontalDrag = { change, dx ->
+                            tracker.addPosition(change.uptimeMillis, change.position)
+                            reveal.dragBy(dx)
+                        },
+                        onDragEnd = { reveal.settle(tracker.calculateVelocity().x) },
+                        onDragCancel = { reveal.settle(0f) },
+                    )
+                },
         )
         if (dock.homeHint > 0f) {
             Text(
@@ -190,27 +222,41 @@ private fun LauncherContent(dock: DockOverlay) {
         Box(
             Modifier
                 .fillMaxHeight()
-                .width(panelWidth + 10.dp)
+                .width(panelWidth + 12.dp)
                 .graphicsLayer { translationX = (reveal.value - 1f) * size.width },
         ) {
-            // Soft shadow along the panel's right edge.
+            // Drop shadow along the panel's right edge.
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .width(10.dp)
+                    .width(12.dp)
                     .offset(x = panelWidth)
-                    .background(Brush.horizontalGradient(listOf(Color(0x55000000), Color.Transparent))),
+                    .background(Brush.horizontalGradient(listOf(Color(0x66000000), Color.Transparent))),
             )
             Column(
                 Modifier
                     .fillMaxHeight()
                     .width(panelWidth)
                     .background(Lomiri.LauncherBg)
-                    .pointerInput(Unit) { detectTapGestures { } }
-                    .statusBarsPadding()
-                    .navigationBarsPadding(),
+                    .statusBarsPadding(),
             ) {
-                // Home button: full-width orange block, as in Lomiri.
+                LauncherList(
+                    items = items,
+                    iconSize = iconSize,
+                    panelWidth = panelWidth,
+                    running = running,
+                    focused = foreground,
+                    reveal = reveal,
+                    state = listState,
+                    onLaunch = { dock.launch(it) },
+                    onDrop = { app, index -> dock.drop(app, index, pinnedApps.map { it.key }) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .onGloballyPositioned { listTop = it.positionInRoot().y },
+                )
+                Spacer(Modifier.height(4.dp))
+                // Home button at the bottom: phones run the Lomiri launcher inverted.
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -221,92 +267,89 @@ private fun LauncherContent(dock: DockOverlay) {
                 ) {
                     HomeGlyph(panelWidth * 0.5f)
                 }
-                LazyColumn(
-                    contentPadding = PaddingValues(top = 4.dp, bottom = 8.dp),
-                    modifier = Modifier.weight(1f),
-                ) {
-                    items(items, key = { it.key }) { app ->
-                        LauncherItem(
-                            app = app,
-                            iconSize = iconSize,
-                            panelWidth = panelWidth,
-                            running = app.packageName in mru,
-                            focused = app.packageName == foreground,
-                            onClick = { dock.launch(app) },
-                            onLongClick = { menuFor = app },
-                        )
-                    }
-                }
+                Spacer(Modifier.navigationBarsPadding())
             }
         }
 
-        val target = menuFor
-        val pinnedIndex = target?.let { s.pinned.indexOf(it.key) } ?: -1
-        ActionSheet(
-            visible = target != null,
-            title = target?.label.orEmpty(),
-            icon = target?.icon,
-            actions = buildList {
-                if (target == null) return@buildList
-                if (pinnedIndex >= 0) {
-                    if (pinnedIndex > 0) add(SheetAction("Move up") { edge.settings.move(target.key, -1) })
-                    if (pinnedIndex < s.pinned.lastIndex) add(SheetAction("Move down") { edge.settings.move(target.key, 1) })
-                    add(SheetAction("Unpin from launcher") { edge.settings.unpin(target.key) })
-                } else {
-                    add(SheetAction("Pin to launcher") { edge.settings.pin(target.key) })
-                }
-                if (target.packageName in mru) add(SheetAction("Close") { edge.recents.dismiss(target.packageName) })
-                add(SheetAction("App info") { dock.hideNow(); edge.apps.openAppInfo(target) })
-            },
-            onDismiss = { menuFor = null },
-        )
+        val q = listState.quickList
+        if (q != null && q in items.indices) {
+            val app = items[q]
+            QuickList(
+                app = app,
+                anchorY = {
+                    val f = listState.fold(q.toFloat(), q == 0, q == items.lastIndex)
+                    listTop + listState.listH - f.bottom - listState.itemH / 2f
+                },
+                panelWidth = panelWidth,
+                entries = buildList {
+                    add(QuickEntry(app.label, bold = true) { dock.launch(app) })
+                    if (app.key in s.pinned) add(QuickEntry("Unpin shortcut") { edge.settings.unpin(app.key) })
+                    else add(QuickEntry("Pin shortcut") { edge.settings.pin(app.key) })
+                    add(QuickEntry("App info") { dock.hideNow(); edge.apps.openAppInfo(app) })
+                    if (app.packageName in running) add(QuickEntry("Quit") { edge.recents.dismiss(app.packageName) })
+                },
+                onDismiss = { listState.quickList = null },
+            )
+        }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+private class QuickEntry(val label: String, val bold: Boolean = false, val onClick: () -> Unit)
+
+/** Lomiri quicklist: a menu beside the icon with a small pointer towards it. */
 @Composable
-private fun LauncherItem(
+private fun QuickList(
     app: AppInfo,
-    iconSize: Dp,
+    anchorY: () -> Float,
     panelWidth: Dp,
-    running: Boolean,
-    focused: Boolean,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
+    entries: List<QuickEntry>,
+    onDismiss: () -> Unit,
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    // Lomiri item height: itemWidth * 15/16 + 1gu.
+    val density = LocalDensity.current
+    val arrowW = 8.dp
     Box(
         Modifier
-            .width(panelWidth)
-            .height(iconSize * 15f / 16f + 8.dp)
-            .combinedClickable(
-                interactionSource = interaction,
-                indication = null,
-                onClick = onClick,
-                onLongClick = onLongClick,
-            ),
-        contentAlignment = Alignment.Center,
-    ) {
-        AppIcon(
-            app.icon,
-            iconSize,
-            contentDescription = app.label,
-            modifier = Modifier.graphicsLayer {
-                val sc = if (pressed) 0.92f else 1f
-                scaleX = sc; scaleY = sc
+            .fillMaxSize()
+            .layout { measurable, constraints ->
+                val p = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+                layout(constraints.maxWidth, constraints.maxHeight) {
+                    val margin = with(density) { 8.dp.roundToPx() }
+                    val y = (anchorY() - p.height / 2f).roundToInt()
+                        .coerceIn(margin, (constraints.maxHeight - p.height - margin).coerceAtLeast(margin))
+                    p.place(with(density) { (panelWidth + 4.dp).roundToPx() }, y)
+                }
             },
-        )
-        // Running pip on the left, focused pip on the right: 0.25gu x 0.5gu.
-        if (running) Pip(Modifier.align(Alignment.CenterStart).offset(x = 3.dp))
-        if (focused) Pip(Modifier.align(Alignment.CenterEnd).offset(x = (-3).dp))
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Canvas(Modifier.size(arrowW, 16.dp)) {
+                val path = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(size.width, 0f); lineTo(0f, size.height / 2f); lineTo(size.width, size.height); close()
+                }
+                drawPath(path, Lomiri.LauncherBg)
+            }
+            Column(
+                Modifier
+                    .width(240.dp)
+                    .shadow(8.dp, RoundedCornerShape(4.dp))
+                    .background(Lomiri.LauncherBg, RoundedCornerShape(4.dp)),
+            ) {
+                entries.forEachIndexed { i, e ->
+                    Text(
+                        e.label,
+                        color = Lomiri.Text,
+                        fontSize = 16.sp,
+                        fontWeight = if (e.bold) FontWeight.Medium else FontWeight.Normal,
+                        maxLines = 1,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onDismiss(); e.onClick() }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                    )
+                    if (i < entries.lastIndex) HorizontalDivider(color = Lomiri.Divider)
+                }
+            }
+        }
     }
-}
-
-@Composable
-private fun Pip(modifier: Modifier) {
-    Box(modifier.size(width = 2.dp, height = 4.dp).background(Color.White))
 }
 
 /** Home button glyph: a 2x2 grid of rounded tiles (apps), drawn in white. */
