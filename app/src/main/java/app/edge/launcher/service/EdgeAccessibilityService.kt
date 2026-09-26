@@ -121,6 +121,7 @@ class EdgeAccessibilityService : AccessibilityService(), EdgeGestureListener {
     private fun updateWindows() {
         val list = try { windows } catch (e: Exception) { return }
         strips.keyboardVisible = list.any { it.type == AccessibilityWindowInfo.TYPE_INPUT_METHOD }
+        strips.systemUiOpen = list.any { it.type == AccessibilityWindowInfo.TYPE_SYSTEM && it.isFocused }
         updateLocked()
     }
 

@@ -111,6 +111,9 @@ class EdgeStrips(
     var keyboardVisible = false
         set(v) { if (field != v) { field = v; relayout() } }
     var fullscreen = false
+        set(v) { if (field != v) { field = v; probe.post { relayout() } } }
+    /** Notification shade, power menu or another system panel has focus. */
+    var systemUiOpen = false
         set(v) { if (field != v) { field = v; relayout() } }
     var locked = false
         set(v) { if (field != v) { field = v; relayout() } }
@@ -139,7 +142,7 @@ class EdgeStrips(
 
     fun screenSize(): Pair<Int, Int> {
         return if (Build.VERSION.SDK_INT >= 30) {
-            val b = wm.currentWindowMetrics.bounds
+            val b = wm.maximumWindowMetrics.bounds
             b.width() to b.height()
         } else {
             val m = android.util.DisplayMetrics()
@@ -151,7 +154,7 @@ class EdgeStrips(
     fun relayout() {
         val (w, h) = screenSize()
         val s = settings
-        val hidden = locked ||
+        val hidden = locked || systemUiOpen ||
             (s.hideWithKeyboard && keyboardVisible) ||
             (s.hideInFullscreen && fullscreen)
         fun px(dp: Int) = (dp * density).toInt().coerceAtLeast(1)

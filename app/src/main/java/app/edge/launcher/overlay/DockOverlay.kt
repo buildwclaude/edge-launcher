@@ -190,6 +190,7 @@ private fun DockContent(dock: DockOverlay) {
                 .width(dockWidth)
                 .graphicsLayer { translationX = (p.value - 1f) * size.width }
                 .background(Lomiri.Panel)
+                .pointerInput(Unit) { detectTapGestures { } }
                 .statusBarsPadding()
                 .navigationBarsPadding()
                 .padding(top = 10.dp),

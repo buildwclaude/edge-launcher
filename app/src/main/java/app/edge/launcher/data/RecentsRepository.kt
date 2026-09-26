@@ -35,7 +35,9 @@ class RecentsRepository(private val context: Context, private val apps: AppRepos
 
     private val homePackages: Set<String> by lazy {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
-        context.packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
+        // Skip Settings' FallbackHome, which only runs while the phone boots.
+        context.packageManager.queryIntentActivities(intent, 0)
+            .filter { !it.activityInfo.name.endsWith("FallbackHome") && it.activityInfo.packageName != "com.android.settings" }
             .map { it.activityInfo.packageName }.toSet() + selfPkg
     }
 

@@ -84,13 +84,15 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
         Box(
             Modifier
                 .fillMaxSize()
-                .pointerInput(Unit) {
+                .pointerInput(drawerVisible) {
+                    if (drawerVisible) return@pointerInput
                     detectTapGestures(
                         onDoubleTap = { SystemActions.lockScreen(context) },
                         onLongPress = { homeMenu = true },
                     )
                 }
-                .pointerInput(Unit) {
+                .pointerInput(drawerVisible) {
+                    if (drawerVisible) return@pointerInput
                     val tracker = VelocityTracker()
                     detectVerticalDragGestures(
                         onDragStart = { tracker.resetTracking(); drawer.beginDrag() },
