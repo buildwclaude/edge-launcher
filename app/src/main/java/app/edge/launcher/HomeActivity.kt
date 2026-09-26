@@ -91,8 +91,7 @@ private fun HomeRoot(onDrawerState: (RevealState) -> Unit) {
                         onLongPress = { homeMenu = true },
                     )
                 }
-                .pointerInput(drawerVisible) {
-                    if (drawerVisible) return@pointerInput
+                .pointerInput(Unit) {
                     val tracker = VelocityTracker()
                     detectVerticalDragGestures(
                         onDragStart = { tracker.resetTracking(); drawer.beginDrag() },
